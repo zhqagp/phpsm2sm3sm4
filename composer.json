@@ -1,12 +1,12 @@
 {
-    "name": "lpilp/guomi",
+    "name": "zhqagp/guomi",
     "description": "国密sm2",
     "type": "library",
     "license": "MIT",
     "authors": [
         {
-            "name": "recent",
-            "email": "lpilp@126.com"
+            "name": "zhqagp",
+            "email": "zhqagp@gmail.com"
         }
     ],
     "minimum-stability": "stable",

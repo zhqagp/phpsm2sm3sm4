@@ -101,9 +101,10 @@ class RtSm2 {
      *
      * @param string $document
      * @param string $publicKey 如提供的base64的，可使用 bin2hex(base64_decode($publicKey))
+     * @param string $type SM2的非对称加密缺省的是c1c3c2， 请使用的时候注意下，对方返回的是c1c3c2还是c1c2c3，进行相应的修改更新,还有一点就是本项目中c1前面没有04， 视对接方的需求，看是否添加\x04
      * @return string
      */
-    public function doEncrypt($document, $publicKey)
+    public function doEncrypt($document, $publicKey, $type='c1c3c2')
     {
         $adapter = $this->adapter;
         $generator = $this->generator;
@@ -127,8 +128,12 @@ class RtSm2 {
         // print_R($c2);echo "\n";
         $c3 = strtolower(Hex2ByteBuf::ByteArrayToHexString($this->cipher->Dofinal()));
         // print_r($c1.$c3.$c2);
+        if($type=='c1c3c2'){
+            return $c1.$c3.$c2;
+        }
 
-        return $c1.$c3.$c2;
+        return $c1.$c2.$c3;
+
 
     }
     /**
@@ -137,9 +142,10 @@ class RtSm2 {
      * @param string $document
      * @param string $privateKey  如提供的base64的，可使用 bin2hex(base64_decode($privateKey))
      * @param bool $trim 是否做04开头的去除，看业务返回
+     * @param string $type SM2的非对称加密缺省的是c1c3c2， 请使用的时候注意下，对方返回的是c1c3c2还是c1c2c3，进行相应的修改更新,还有一点就是本项目中c1前面没有04， 视对接方的需求，看是否添加\x04
      * @return string
      */
-    public function doDecrypt($encryptData,$privateKey,$trim = true)
+    public function doDecrypt($encryptData,$privateKey,$trim = true, $type='c1c3c2')
     {
         // $encryptData = $c1.$c3.$c2
         if(substr($encryptData,0,2)=='04' && $trim){
@@ -151,8 +157,14 @@ class RtSm2 {
         $c1X = substr($encryptData,0,64);
         $c1Y = substr($encryptData,strlen($c1X),64);
         $c1Length = strlen($c1X) + strlen($c1Y);
-        $c3 = substr($encryptData,$c1Length,64);
-        $c2 = substr($encryptData,$c1Length+strlen($c3));
+        if($type=='c1c3c2'){
+            $c3 = substr($encryptData,$c1Length,64);
+            $c2 = substr($encryptData,$c1Length+strlen($c3));
+        }else{
+            $c3 = substr($encryptData,-64);
+            $c2 = substr($encryptData,$c1Length,strlen($encryptData)-64-$c1Length);
+        }
+
         $p1 = new Point( $adapter, $generator->getCurve(), gmp_init($c1X, 16 ), gmp_init( $c1Y, 16 ) );
         $this->cipher->initDecipher($p1,$privateKey);
 
